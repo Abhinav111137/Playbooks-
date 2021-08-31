@@ -1,0 +1,2 @@
+[Tomcat]
+Remote Server IP   ansible_user=root user on remote machine  ansible_sudo_pass=password of the root user
