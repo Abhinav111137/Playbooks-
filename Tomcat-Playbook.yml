@@ -1,0 +1,49 @@
+---
+  - name: play book to deploy tomcat on remote host
+    hosts: all
+    vars:
+      port_number: 8090
+      manager_username: tomcat
+      manager_password: 12345678
+      admin_username: admin
+      admin_pasword: 12345678
+    become: true
+    tasks:
+      - name: updating repo
+        yum:
+          name: "*"
+          state: latest
+      - name: install JDE
+        yum:
+          name: java-1.8.0-openjdk
+          state: present
+      - name: Downloading the tomcat package
+        get_url:
+              url: "https://downloads.apache.org/tomcat/tomcat-8/v8.5.70/bin/apache-tomcat-8.5.70.tar.gz"
+              dest: /usr/opt
+      - name: uarchiving the tomcat package
+        unarchive:
+          src: "/usr/opt/apache-tomcat-8.5.70.tar.gz"
+          dest: /usr/opt
+          remote_src: yes
+      - name: renaiming the folder apache-tomcat-8.5.70
+        command: mv /usr/opt/apache-tomcat-8.5.70 /usr/opt/tomcat
+
+      - name: setting up the deafault port
+        template:
+          src: server.xml.j2
+          dest: /usr/opt/tomcat/conf/server.xml
+      - name: configuring the contextfile
+        template:
+          src: /home/jenkins/ansible/templates/hostmanager/context.xml.j2
+          dest: /usr/opt/tomcat/webapps/host-manager/META-INF/context.xml
+      - name: configuring the contextfile for host
+        template:
+          src: /home/jenkins/ansible/templates/contextmanager/context.xml.j2
+          dest: /usr/opt/tomcat/webapps/manager/META-INF/context.xml
+      - name: setting up the deafult manager and host user
+        template:
+         src: tomcat-users.xml.j2
+         dest: /usr/opt/tomcat/conf/tomcat-users.xml
+      - name: starting the tocat serivces
+        shell: nohup /usr/opt/tomcat/bin/startup.sh
